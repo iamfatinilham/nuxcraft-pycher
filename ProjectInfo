@@ -1,5 +1,6 @@
-project_name='NuxCraft Pycher'
+project_name='NuxCraft PyCher'
 project_codename='nuxcraft_pycher'
+project_description='The well-known block game (Java Edition) launcher written in Python for Offline (Single Player) and LAN builders (Made for Linux)'
 creator='Fatin Ilham'
 licence_name='GNU General Public License v3.0'
 license='https://www.gnu.org/licenses/gpl-3.0.en.html'

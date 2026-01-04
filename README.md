@@ -1,5 +1,5 @@
 
-# NuxCraft-Pycher
+# NuxCraft-PyCher
 
 The well-known block game (Java Edition) launcher written in Python for Offline (Single Player) and LAN builders (Made for Linux)
 
