@@ -1,15 +1,39 @@
 #!/usr/bin/env python3
 
-import os, json, requests, subprocess, zipfile, sys, argparse, hashlib, time, uuid, multiprocessing
-import tty, termios
+import os, json, requests, subprocess, zipfile, sys, argparse, hashlib, time, uuid, ctypes, multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 
 ############################
 ##### LAUNCHER VERSION #####
 ############################
 launcher_version = 0.3
-platform_os = "linux" # If for Linux, then the value should always be "linux" (CASE SENSITIVE).
+platform_os = "windows" # If for Windows, then the value should always be "windows" (CASE SENSITIVE). Not even "Windows" and, "win32"
 ############################
+
+# --- Windows specific utilities ---
+ 
+if sys.platform == "win32":
+    import msvcrt # Windows-only library
+
+def has_large_pages_privilege():
+    """Checks if the process has the SeLockMemoryPrivilege (required for -XX:+UseLargePages)"""
+    if os.name != 'nt': return False
+    SE_LOCK_MEMORY_NAME = "SeLockMemoryPrivilege"
+    TOKEN_QUERY = 0x0008
+    try:
+        process = ctypes.windll.kernel32.GetCurrentProcess()
+        token = ctypes.c_void_p()
+        if not ctypes.windll.advapi32.OpenProcessToken(process, TOKEN_QUERY, ctypes.byref(token)):
+            return False
+        luid = ctypes.create_string_buffer(8) # LUID is 8 bytes
+        if not ctypes.windll.advapi32.LookupPrivilegeValueW(None, SE_LOCK_MEMORY_NAME, luid):
+            ctypes.windll.kernel32.CloseHandle(token)
+            return False
+        ctypes.windll.kernel32.CloseHandle(token)
+        return True
+    except: return False    
+
+    """MAIN SCRIPT (BORROWED FROM LINUX SCRIPT) STARTS FROM NOW..."""
 
 try:
     # Generate player UUID
@@ -46,15 +70,13 @@ try:
     parser.add_argument("--last", "--offline", action="store_true", dest="offline", help="  Launch last version instantly")
     parser.add_argument("--jvm-flags", type=str, metavar="FLAGS", default=" ", help="  Parse extra flags/arguments for JVM when launching game")
     parser.add_argument("--game-flags", type=str, metavar="FLAGS", default=" ", help="  Parse extra flags/arguments for the game when launching game")
-    parser.add_argument("--dhp", "--disable-huge-pages", action="store_true", dest="disable_huge_pages", help="  Disable Huge Pages")
+    parser.add_argument("--dlp", "--disable-large-pages", action="store_true", dest="disable_large_pages", help="  Disable Large Pages")
     parser.add_argument("--download-only", action="store_true", dest="game_download_only", help="  Only Download game files.")
     parser.add_argument("--demo", "--demo-mode", action="store_true", dest="demo_mode", help="  Launch the game in demo mode")
     
     args = parser.parse_args()
     
-    
-    # Check for Linux environment
-    if sys.platform != f"{platform_os}":
+    if sys.platform != "win32":
         print(f"[ ❌ ] Error: This script is designed specifically for {platform_os}.")
         sys.exit(1)
     
@@ -75,7 +97,6 @@ try:
     GAME_ARGS = args.game_flags
     FULLSCREEN = args.fullscreen
     DEMO_MODE = args.demo_mode
-    
     
     for folder in ['versions', 'libraries', 'assets/indexes', 'assets/objects', 'cache', 'logs']:
         os.makedirs(os.path.join(MC_DIR, folder), exist_ok=True)
@@ -108,11 +129,11 @@ try:
             if not silent: print(f"[ ! ] Error: {e}")
     
     def is_allowed(rules):
-        # Strict Linux filtering for library rules.
+        # Strict Windows filtering for library rules.
         if not rules: return True
         allowed = False
         for r in rules:
-            # If 'os' is specified, it MUST be linux. If no 'os', it applies to all.
+            # If 'os' is specified, it MUST be Windows. If no 'os', it applies to all.
             match = (r.get('os', {}).get('name') == f"{platform_os}") if 'os' in r else True
             if match: allowed = (r['action'] == 'allow')
         return allowed
@@ -135,32 +156,15 @@ try:
             else:
                 with open(manifest_cache, 'r') as f: manifest = json.load(f)
         except:
-            if os.path.exists(manifest_cache):
-                with open(manifest_cache, 'r') as f: manifest = json.load(f)
-            else:
-                print("[ ❌ ] Failed to fetch version manifest and no cache available. Check your internet connection.")
-                sys.exit(1)
+            with open(manifest_cache, 'r') as f: manifest = json.load(f)
     
         v_pool = [v for v in manifest['versions'] if v['type'] in (['snapshot'] if args.snapshots else (['old_beta', 'old_alpha'] if args.beta else ['release']))]
         last_saved = ""
         if os.path.exists(last_v_file):
             with open(last_v_file, 'r') as f: last_saved = f.read().strip()
     
-        # Version menu
+        # Interactive Menu comes first
         def interactive_select(options, last_saved=""):
-    
-            def get_linux_key():
-                fd = sys.stdin.fileno()
-                old_settings = termios.tcgetattr(fd)
-                try:
-                    tty.setraw(sys.stdin.fileno())
-                    ch = sys.stdin.read(1)
-                    # Handle Arrow keys
-                    if ch == '\x1b':
-                        ch += sys.stdin.read(2)
-                finally:
-                    termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-                return ch
             # Dynamic arrow-key menu that scales with terminal height.
             if not sys.stdout.isatty(): return None
     
@@ -182,7 +186,7 @@ try:
                 except:
                     window_size = 15
     
-                print("\033[H\033[J", end="") # os.system('clear') ## Clear Screen
+                os.system('cls') ## Clear Screen
                 print(f"------ Choose game version ------\n")
                 print(f"Arrows ( ↑ and ↓ ): Navigate | Enter: Select | Q: Print Mode (for fallback)\n")
     
@@ -210,42 +214,37 @@ try:
                 print(f"\n[ {curr + 1} / {total} ] | Page: {start+1}-{end}")
     
                 # INPUT HANDLING
-                key = get_linux_key()
-                if key == '\x1b[A': # If UP Arrow key is pressed,
-                    curr = max(0, curr -1)
-                elif key == '\x1b[B': # If DOWN Arrow key is pressed,
-                    curr = min(total - 1, curr + 1)
-                elif key in ('\r', '\n'): # If ENTER key is pressed (Carriage_Return-Line_Feed),
+                key = msvcrt.getch()
+                if key == b'\xe0': 
+                    key = msvcrt.getch()
+                    if key == b'H': curr = max(0, curr - 1) # If UP Arrow key is pressed,
+                    elif key == b'P': curr = min(total - 1, curr + 1) # If DOWN Arrow key is pressed,
+                elif key in (b'\r', b'\n'): # If ENTER key is pressed (Carriage_Return-Line_Feed),
                     return options[curr]
-                elif key.lower() == 'q': # Quit if 'Q' key is pressed
-                    print("\033[H\033[J", end="") # os.system('clear') ## Clear Screen
+                elif key.lower() == b'q': # Quit if 'Q' key is pressed
+                    os.system('cls')
                     return None
-        
-        # Interactive Menu comes first
+    
         selected_obj = interactive_select(v_pool, last_saved)
         
         if selected_obj:
             VERSION, V_URL = selected_obj['id'], selected_obj['url']
             with open(last_v_file, 'w') as f: f.write(VERSION)
         else:
-            while True:
-                # FALLBACK to manual input if user quits less
-                print("\n  ---- Game VERSION LIST ----")
-                menu = "\n".join([f"    {i+1}. {v['id']} ({v['type']}) {' <-- [LAST SELECTED]' if v['id'] == last_saved else ''}" for i, v in enumerate(v_pool)])
-                try: subprocess.run(["less", "-X"], input=menu, text=True, check=True) # Try to run less
-                except: print(menu) # Print Everything Fallback
-                sel = input(f"\nSelect Version [Default: {last_saved}]: ").strip()
-                if not sel and last_saved:
-                    VERSION = last_saved
-                    V_URL = next(v['url'] for v in v_pool if v['id'] == VERSION)
-                    break
+            # FALLBACK to manual input if user quits interactive menu
+            print("\n  ---- Game VERSION LIST ----")
+            menu = "\n".join([f"    {i+1}. {v['id']} ({v['type']}) {' <-- [LAST SELECTED]' if v['id'] == last_saved else ''}" for i, v in enumerate(v_pool)])
+            print(menu) # Print Everything Fallback
+            sel = input(f"\nSelect Version [Default: {last_saved}]: ").strip()
+            if not sel and last_saved:
+                VERSION = last_saved
+                V_URL = next(v['url'] for v in v_pool if v['id'] == VERSION)
+            else:
                 try:
                     idx = int(sel) - 1
-                    if 0 <= idx < len(v_pool):
-                        VERSION, V_URL = v_pool[idx]['id'], v_pool[idx]['url']
-                        with open(last_v_file, 'w') as f: f.write(VERSION)
-                        break
-                except: pass
+                    VERSION, V_URL = v_pool[idx]['id'], v_pool[idx]['url']
+                    with open(last_v_file, 'w') as f: f.write(VERSION)
+                except: sys.exit(0)
     
     # CHECK RUNTIME ASSETS & NATIVES
     v_root = os.path.join(MC_DIR, f"versions/{VERSION}")
@@ -270,7 +269,7 @@ try:
     natives_dir = os.path.join(v_root, '${natives_directory}')
     os.makedirs(natives_dir, exist_ok=True)
     
-    # Parse Libraries (for Linux)
+    # Parse Libraries (for Windows)
     for lib in v_json['libraries']:
         if not is_allowed(lib.get('rules')): continue
         dl = lib.get('downloads', {})
@@ -278,7 +277,7 @@ try:
             lp = os.path.join(MC_DIR, "libraries", dl['artifact']['path'])
             lib_queue.append((dl['artifact']['url'], lp, dl['artifact'].get('sha1')))
             cp_paths.append(lp)
-        # Explicitly look for Linux natives
+        # Explicitly look for Windows natives
         if f"natives-{platform_os}" in dl.get('classifiers', {}):
             n_data = dl['classifiers'][f"natives-{platform_os}"]
             np = os.path.join(MC_DIR, "libraries", n_data['path'])
@@ -328,13 +327,13 @@ try:
                 success = True
                 break
             else:
-                print(f"[ ⚠️ ] Warning: {len(missing)} file/s failed to download or are corrupt:")
+                print(f"[ ⚠️️ ] Warning: {len(missing)} file/s failed to download or are corrupt:")
                 for m in missing[:15]: # Log first 15 missing files to stdout
                     print(f" - {os.path.basename(m)}")
                 if len(missing) > 15: print(f" ... and {len(missing)-15} more.")
     
                 if attempt < max_retries - 1:
-                    print("[ ⚠️ ] Retrying missing files in 2 seconds...")
+                    print("[ ⚠️️ ] Retrying missing files in 2 seconds...")
                     time.sleep(2)
     
         if not success:
@@ -342,25 +341,14 @@ try:
             print(f"[ ❌ ] {len(missing)} files are still missing. Aborting launch.")
             sys.exit(1)
     
-    # Extract natives (Linux)
+    # Extract natives (Windows)
     if not os.listdir(natives_dir):
         print(f"[ 📂 ] Extracting Natives... ({platform_os})")
         for np in natives_queue:
             if os.path.exists(np):
-                try:
-                    with zipfile.ZipFile(np, 'r') as z:
-                        for n in [f for f in z.namelist() if f.endswith('.so')]:
-                            with z.open(n) as s, open(os.path.join(natives_dir, os.path.basename(n)), "wb") as d: d.write(s.read())
-                except: pass
-    
-        # ATTENTION NEEDED!!! (For linux only) Specifically extract libflite.so from the text2speech library if found
-        for lp in cp_paths:
-            if "text2speech" in lp and os.path.exists(lp):
-                try:
-                    with zipfile.ZipFile(lp, 'r') as z:
-                        for n in [f for f in z.namelist() if f.endswith('libflite.so')]:
-                            with z.open(n) as s, open(os.path.join(natives_dir, "libflite.so"), "wb") as d: d.write(s.read())
-                except: pass
+                with zipfile.ZipFile(np, 'r') as z:
+                    for n in [f for f in z.namelist() if f.endswith('.dll')]:
+                        with z.open(n) as s, open(os.path.join(natives_dir, os.path.basename(n)), "wb") as d: d.write(s.read())
     
     # Exit the program if the user only wanted to download game files.
     if args.game_download_only:
@@ -386,27 +374,20 @@ try:
         # Base JVM Command
         cmd = [JAVA_BIN, f"-Xmx{max_mb}M", f"-Xms{min_mb}M"]
     
-        # AUTOMATIC HUGE PAGES DETECTION
-        # Check if Linux and if THP is enabled/supported
-        thp_path = "/sys/kernel/mm/transparent_hugepage/enabled"
-        use_huge_pages = False
-        huge_pages_confirm = False
-        intentionally_disabled_huge_pages = False
-        if os.path.exists(thp_path):
-            with open(thp_path, 'r') as f:
-                status = f.read()
-                if "[always]" in status or "[madvise]" in status:
-                    use_huge_pages = True
-        if not args.disable_huge_pages:
-            if use_huge_pages:
+        # LARGE PAGES FLAG APPEND (If "large pages" is accessible)
+        if has_large_pages_privilege():
+            if not args.disable_large_pages:
                 cmd.extend(["-XX:+UseLargePages", "-XX:+AlwaysPreTouch"])
-                huge_pages_confirm = True
+                print("\n[ ✅ ] Large Pages detected & enabled.")
+            else:
+                print("\n[ ℹ️ ] Large Pages has been disabled by the user.")
         else:
-            intentionally_disabled_huge_pages = True
-        
-        # Appending remaining flags
-        cmd.extend(["--enable-native-access=ALL-UNNAMED", f"-Djava.library.path={natives_dir}", f"-Djna.library.path={natives_dir}", f"-Dminecraft.launcher.brand=NuxCraft-PyCher({launcher_version})"])
+            print("\n[ ℹ️ ] NOTE: Large Pages not available to use or, is disabled (Requires Admin/GPO).\n", 
+                  "      For optimal performance, consider enabling Large Pages on your system (Optional).")
     
+        # Appending remaining flags
+        cmd.extend(["--enable-native-access=ALL-UNNAMED", f"-Djava.library.path={natives_dir}", f"-Djna.library.path={natives_dir}", f"-Dminecraft.launcher.brand=NuxCraft-PyCher-win({launcher_version})"])
+        
         if JVM_ARGS.strip(): cmd.extend(JVM_ARGS.split())
     
         params = {
@@ -420,7 +401,7 @@ try:
             "${user_type}": "mojang", 
             "${version_type}": "release", 
             "${natives_directory}": natives_dir, 
-            "${classpath}": ":".join(cp_paths) # Linux Classpath Separator
+            "${classpath}": ";".join(cp_paths) # Windows Classpath Separator
         }
     
         if 'arguments' in v_json:
@@ -433,7 +414,7 @@ try:
             for arg in v_json['arguments'].get('game', []):
                 if isinstance(arg, str): cmd.append(params.get(arg, arg))
         else:
-            cmd.extend(["-cp", ":".join(cp_paths), v_json['mainClass']])
+            cmd.extend(["-cp", ";".join(cp_paths), v_json['mainClass']])
             leg_str = v_json['minecraftArguments']
             for k, v in params.items(): leg_str = leg_str.replace(k, v)
             cmd.extend(leg_str.split())
@@ -441,18 +422,9 @@ try:
         if GAME_ARGS.strip(): cmd.extend(GAME_ARGS.split())
         if FULLSCREEN: cmd.append('--fullscreen')
         if DEMO_MODE: cmd.append('--demo')
-        return cmd, huge_pages_confirm, intentionally_disabled_huge_pages
+        return cmd
     
-    final_cmd, huge_pages_active, intentionally_disabled_huge_pages = build_cmd()
-    
-    if huge_pages_active:
-        print("\n[ ✅ ] Transparent Huge Pages (THP) enabled")
-    else:
-        if intentionally_disabled_huge_pages:
-            print("\n[ ℹ️ ] Transparent Huge Pages (THP) has been disabled by the user.")
-        else:
-            print("\n[ ℹ️ ] NOTE: Transparent Huge Pages (THP) not detected or disabled.\n", 
-                  "      For optimal performance, consider enabling THP on your system (Optional).")
+    final_cmd = build_cmd()
     
     print(f"\n[ 👍 ] Finalizing... \n", 
           f"        Minecraft Version: {VERSION}\n", 
@@ -468,16 +440,16 @@ try:
         f.write(f"    (PLATFORM: {platform_os}) COMMAND EXECUTED:\n\n{' '.join(final_cmd)}\n\n")
         f.write("-" * 25 + " GAME OUTPUT START " + "-" * 25 + "\n\n")
         f.flush()
-        
+    
         # Detach and exit
         subprocess.Popen(
             final_cmd, 
             cwd=MC_DIR, 
             stdout=f, 
             stderr=f, 
-            start_new_session=True
-        )
-        
+            creationflags=0x00000008 | 0x00000200
+        ) # DETACHED & LAUNCHED NEW_PROCESS_GROUP
+    
         print("[ ✅ ] Game launch started.")
         print("[ ⏰ ] Please, be patient...\n")
         sys.exit(0)
