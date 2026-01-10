@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-import os, json, requests, subprocess, zipfile, sys, argparse, hashlib, time, uuid, ctypes, multiprocessing
+import os, json, requests, subprocess, shutil, zipfile, sys, argparse, hashlib, time, uuid, ctypes, multiprocessing
 from concurrent.futures import ThreadPoolExecutor
 
 ############################
@@ -10,7 +10,7 @@ launcher_version = 0.3
 platform_os = "windows" # If for Windows, then the value should always be "windows" (CASE SENSITIVE). Not even "Windows" and, "win32"
 ############################
 
-# --- Windows specific utilities ---
+# Windows specific utilities
  
 if sys.platform == "win32":
     import msvcrt # Windows-only library
@@ -32,8 +32,8 @@ def has_large_pages_privilege():
         ctypes.windll.kernel32.CloseHandle(token)
         return True
     except: return False    
-
-    """MAIN SCRIPT (BORROWED FROM LINUX SCRIPT) STARTS FROM NOW..."""
+    
+    # MAIN SCRIPT (BORROWED FROM LINUX SCRIPT) STARTS FROM NOW...
 
 try:
     # Generate player UUID
@@ -58,15 +58,16 @@ try:
     
     parser = argparse.ArgumentParser(description=f"NuxCraft-PyCher ({platform_os}) Version: {launcher_version}")
     parser.add_argument("-f", "--fullscreen", action="store_true", help="  Launch the game in fullscreen mode")
-    parser.add_argument("--java", type=str, metavar="PATH(BINARY)", default="java", help="  Java binary path")
-    parser.add_argument("--game-dir", type=str, metavar="PATH(DIRECTORY)", default=".minecraft", help="  Custom game directory | Default: .minecraft")
+    parser.add_argument("--java", type=str, metavar="PATH(BINARY FULL_PATH)", default="java", help="  Java binary path")
+    parser.add_argument("--game-dir", type=str, metavar="PATH(DIRECTORY FULL_PATH)", default=".minecraft", help="  Custom game directory | Default: .minecraft")
+    parser.add_argument("-O", "--old", action="store_true", dest="old_compatibility", help="  For old version compatibility")
     parser.add_argument("-s", "--snapshots", action="store_true", help="  Show snapshot releases")
     parser.add_argument("-b", "--beta", action="store_true", help="  Show old beta releases")
     parser.add_argument("-R", "--refresh", action="store_true", dest="refresh", help="  Fetch version list from internet")
     # parser.add_argument("-r", "--recheck", action="store_true", dest="recheck", help="  Recheck Files") ## Future Plan
     parser.add_argument("-p", "--player", type=str, metavar="NAME", default="player", help="  Set player username | Default: player")
-    parser.add_argument("-m", "--memory", type=str, metavar="AMOUNT", default="2G", help="  RAM (e.g. 8G) | Default: 4G")
-    parser.add_argument("-t", "--threads", type=int, metavar="NUMBER", default=default_max_threads, help=f"  Allocate max number of threads (e.g. 4) | Default: {default_max_threads}")
+    parser.add_argument("-m", "--memory", type=str, dest="memory", metavar="AMOUNT", default="2G", help="  RAM (e.g. 8G) | Default: 4G")
+    parser.add_argument("-t", "--threads", type=int, dest="threads", metavar="NUMBER", default=default_max_threads, help=f"  Allocate max number of threads (e.g. 4) | Default: {default_max_threads}")
     parser.add_argument("--last", "--offline", action="store_true", dest="offline", help="  Launch last version instantly")
     parser.add_argument("--jvm-flags", type=str, metavar="FLAGS", default=" ", help="  Parse extra flags/arguments for JVM when launching game")
     parser.add_argument("--game-flags", type=str, metavar="FLAGS", default=" ", help="  Parse extra flags/arguments for the game when launching game")
@@ -95,10 +96,9 @@ try:
     MAX_THREAD_COUNT = args.threads
     JVM_ARGS = args.jvm_flags
     GAME_ARGS = args.game_flags
-    FULLSCREEN = args.fullscreen
     DEMO_MODE = args.demo_mode
     
-    for folder in ['versions', 'libraries', 'assets/indexes', 'assets/objects', 'cache', 'logs']:
+    for folder in ['versions', 'libraries', 'assets/indexes', 'assets/objects', 'resources', 'cache', 'logs']:
         os.makedirs(os.path.join(MC_DIR, folder), exist_ok=True)
     
     # UTILITIES
@@ -133,9 +133,17 @@ try:
         if not rules: return True
         allowed = False
         for r in rules:
-            # If 'os' is specified, it MUST be Windows. If no 'os', it applies to all.
-            match = (r.get('os', {}).get('name') == f"{platform_os}") if 'os' in r else True
-            if match: allowed = (r['action'] == 'allow')
+            # If 'os' is specified, it MUST be windows or win.
+            if 'os' in r:
+                os_name = r.get('os', {}).get('name')
+                # Old Game versions sometimes use 'win', new ones use 'windows'
+                match = (os_name == "windows" or os_name == "win")
+            else:
+                # If no 'os', it applies to all.
+                match = True
+                
+            if match: 
+                allowed = (r['action'] == 'allow')
         return allowed
     
     # SELECT GAME VERSION
@@ -150,7 +158,14 @@ try:
     if not VERSION:
         try:
             if args.refresh or not os.path.exists(manifest_cache):
-                r = session.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", timeout=15)
+                try:
+                    r = session.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", timeout=15)
+                    r.raise_for_status()
+                except requests.exceptions.RequestException:
+                    print(f"[ ❌ ] Cannot fetch version list from https://launchermeta.mojang.com/mc/game/version_manifest.json")
+                    print(f"     Trying https://piston-meta.mojang.com/mc/game/version_manifest.json")
+                    r = session.get("https://piston-meta.mojang.com/mc/game/version_manifest.json", timeout=15)
+                
                 manifest = r.json()
                 with open(manifest_cache, 'w') as f: json.dump(manifest, f)
             else:
@@ -202,7 +217,7 @@ try:
                     is_last = (v['id'] == last_saved)
     
                     sel_prefix = " >> " if is_selected else "    "
-                    sel_marker = " [ X ]" if is_selected else " [   ]" # Future thoughts
+                    sel_marker = " [ X ]" if is_selected else " [   ]" # Future Plan
     
                     line = f"{sel_prefix}{v['id']} ({v['type']})"
                     if is_last:
@@ -265,7 +280,7 @@ try:
     
     cp_paths, lib_queue, natives_queue = [jar_path], [], []
     
-    
+    # Mapping variables
     natives_dir = os.path.join(v_root, '${natives_directory}')
     os.makedirs(natives_dir, exist_ok=True)
     
@@ -333,9 +348,30 @@ try:
                 if len(missing) > 15: print(f" ... and {len(missing)-15} more.")
     
                 if attempt < max_retries - 1:
-                    print("[ ⚠️️ ] Retrying missing files in 2 seconds...")
-                    time.sleep(2)
-    
+                    print("[ ⚠️️ ] Retrying missing files in 5 seconds...")
+                    time.sleep(5)
+        
+        if args.old_compatibility:
+            # Sound compatibility fix for old versions
+            shutil.copytree(os.path.join(MC_DIR, "assets"), os.path.join(MC_DIR, "resources"), dirs_exist_ok=True)
+            asset_index_path = os.path.join(MC_DIR, f"assets/indexes/{a_id}.json")
+            if os.path.exists(asset_index_path):
+                with open(asset_index_path, 'r') as f:
+                    index_data = json.load(f)
+                    objects = index_data.get('objects', {})
+            
+                    # tqdm for visual feedback on sound mapping
+                    for name, info in tqdm(objects.items(), desc="[ 🔊 ] Reconstructing Legacy Sounds", bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} items  "):
+                        h = info['hash']
+                        src_file = os.path.join(MC_DIR, f"assets/objects/{h[:2]}/{h}")
+                        dst_file = os.path.join(MC_DIR, "resources", name)
+                        
+                        if os.path.exists(src_file):
+                            os.makedirs(os.path.dirname(dst_file), exist_ok=True)
+                            if not os.path.exists(dst_file):
+                                shutil.copy2(src_file, dst_file)
+        
+        
         if not success:
             print("\n[ ❌ ] Critical Error: Failed to download required files after multiple attempts.")
             print(f"[ ❌ ] {len(missing)} files are still missing. Aborting launch.")
@@ -352,7 +388,7 @@ try:
     
     # Exit the program if the user only wanted to download game files.
     if args.game_download_only:
-        print(f"\n[ ✅ ] Minecraft {VERSION} Downloaded Successfully")
+        print(f"\n[ ✅ ] Game {VERSION} Downloaded Successfully")
         print(f"\n[ ✅ ] {platform_os} library included...")
         print(f"\n[ BYE ] Exiting...\n")
         sys.exit(0)
@@ -386,7 +422,8 @@ try:
                   "      For optimal performance, consider enabling Large Pages on your system (Optional).")
     
         # Appending remaining flags
-        cmd.extend(["--enable-native-access=ALL-UNNAMED", f"-Djava.library.path={natives_dir}", f"-Djna.library.path={natives_dir}", f"-Dminecraft.launcher.brand=NuxCraft-PyCher-win({launcher_version})"])
+        if not args.old_compatibility: cmd.append("--enable-native-access=ALL-UNNAMED")
+        cmd.extend([f"-Djava.library.path={natives_dir}", f"-Djna.library.path={natives_dir}", f"-Dminecraft.launcher.brand=NuxCraft-PyCher-win({launcher_version})"])
         
         if JVM_ARGS.strip(): cmd.extend(JVM_ARGS.split())
     
@@ -420,14 +457,14 @@ try:
             cmd.extend(leg_str.split())
     
         if GAME_ARGS.strip(): cmd.extend(GAME_ARGS.split())
-        if FULLSCREEN: cmd.append('--fullscreen')
+        if args.fullscreen: cmd.append('--fullscreen')
         if DEMO_MODE: cmd.append('--demo')
         return cmd
     
     final_cmd = build_cmd()
     
     print(f"\n[ 👍 ] Finalizing... \n", 
-          f"        Minecraft Version: {VERSION}\n", 
+          f"        Game Version: {VERSION}\n", 
           f"        Player Name: {USERNAME}\n", 
           f"        Max Allocated RAM: {MEMORY}\n", 
           f"        Max Thread Count: {MAX_THREAD_COUNT}\n")
