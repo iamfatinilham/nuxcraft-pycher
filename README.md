@@ -183,9 +183,6 @@ The well-known block game (Java Edition) launcher written in Python for Offline 
 
   You don't need to believe me. You can inspect the full code yourself. It's an `open-source` `project` licenced under [GPL-V3](https://www.gnu.org/licenses/gpl-3.0.en.html) with no intent to make money. Free in freedom...
 
-- #### Do, I need any account?
-
-  Single answer, **NO**
 
 
 

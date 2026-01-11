@@ -452,9 +452,12 @@ try:
                 cmd.append("-Dnet.java.games.input.librarypath=" + natives_dir)
         
         g_launcher_name_part = b64d("bWluZWNyYWZ0")
-
-        cmd.extend([f"-Djava.library.path={natives_dir}", f"-Djna.library.path={natives_dir}", f"-Dminecraft.launcher.brand=NuxCraft-PyCher({launcher_version})"])
-    
+        cmd.extend([
+            f"-Djava.library.path={natives_dir}", 
+            f"-Djna.library.path={natives_dir}", 
+            f"-D{g_launcher_name_part}.launcher.brand=NuxCraft-PyCher({launcher_version})"
+            ])
+        
         if JVM_ARGS.strip(): cmd.extend(JVM_ARGS.split())
     
         params = {

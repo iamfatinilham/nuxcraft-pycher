@@ -163,8 +163,8 @@ try:
     if not VERSION:
         try:
             if args.refresh or not os.path.exists(manifest_cache):
-                manifest_json_remote_source1 = b64d('aHR0cHM6Ly9sYXVuY2hlcm1ldGEubW9qYW5nLmNvbS9tYy9nYW1lL3ZlcnNpb25fbWFuaWZlc3QuanNvbg==')
-                manifest_json_remote_source2 = b64d('aHR0cHM6Ly9waXN0b24tbWV0YS5tb2phbmcuY29tL21jL2dhbWUvdmVyc2lvbl9tYW5pZmVzdC5qc29u')
+                manifest_json_remote_source1 = b64d("aHR0cHM6Ly9sYXVuY2hlcm1ldGEubW9qYW5nLmNvbS9tYy9nYW1lL3ZlcnNpb25fbWFuaWZlc3QuanNvbg==")
+                manifest_json_remote_source2 = b64d("aHR0cHM6Ly9waXN0b24tbWV0YS5tb2phbmcuY29tL21jL2dhbWUvdmVyc2lvbl9tYW5pZmVzdC5qc29u")
                 try:
                     r = session.get(manifest_json_remote_source1, timeout=15)
                     r.raise_for_status()
@@ -431,7 +431,12 @@ try:
     
         # Appending remaining flags
         if not args.old_compatibility: cmd.append("--enable-native-access=ALL-UNNAMED")
-        cmd.extend([f"-Djava.library.path={natives_dir}", f"-Djna.library.path={natives_dir}", f"-Dminecraft.launcher.brand=NuxCraft-PyCher-win({launcher_version})"])
+        g_launcher_name_part = b64d("bWluZWNyYWZ0")
+        cmd.extend([
+            f"-Djava.library.path={natives_dir}", 
+            f"-Djna.library.path={natives_dir}", 
+            f"-D{g_launcher_name_part}.launcher.brand=NuxCraft-PyCher-win({launcher_version})"
+            ])
         
         if JVM_ARGS.strip(): cmd.extend(JVM_ARGS.split())
     
