@@ -61,7 +61,7 @@ The well-known block game (Java Edition) launcher written in Python for Offline 
 
 
 
-    ### **`Note: Specific game version requires specific Java Version. (Old version of game won't run on newer java version)`**
+    ### **`Note: Specific game version requires specific Java Version. (Old version of game won't run on newer java version)` You can use `--java` flag to point your script to that Java binary**
 
     <hr>
 
@@ -150,11 +150,15 @@ The well-known block game (Java Edition) launcher written in Python for Offline 
 
 
   **Note: By default, the script will only show stable releases in descending order. You can override this behaviour by using `-s`/ `--snapshots` for snapshot/developer releases and `-b`/ `--beta` for old beta releases.**
-
+  
+  
+  **Also Note 😅: If you want to play *older versions* then, don't forget to use `-O` or, `--old` along with compatible Java version with `--java`**
+  
+  **If you forgot to use `-O` or, `--old` while downloading older version of the game, and facing sound not working issue, then delete the `.integrity_passed` file located at `.game > versions > {VERSION NUMBER}` directory/folder and run the script again with `-O` or, `--old` flag. This might fix your sound issue.**
 
   To get started and see help,
-
-
+  
+  
   - ### On Linux 🐧:
     ```bash
     python3 ./nuxcraft-pycher.py --help
