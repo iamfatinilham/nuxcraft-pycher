@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 ############################
 ##### LAUNCHER VERSION #####
 ############################
-launcher_version = 0.3
+launcher_version = 0.4
 platform_os = "linux" # If for Linux, then the value should always be "linux" (CASE SENSITIVE).
 ############################
 
