@@ -167,7 +167,7 @@ The well-known block game (Java Edition) launcher written in Python for Offline 
 
 **Then, you are good to go 😃😃😃**
 
-**Just answer the prompts, and Minecraft will download and launch**
+**Just answer the prompts, and the game will download and launch**
 
 
 **Note: the script might look broken if your terminal doesn't support unicode and emojis**

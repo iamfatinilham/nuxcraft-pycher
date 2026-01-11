@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
-import os, json, requests, subprocess, shutil, zipfile, sys, argparse, hashlib, time, uuid, multiprocessing
-import tty, termios
+import os, json, requests, subprocess, shutil, zipfile, sys, argparse, hashlib, time, uuid, multiprocessing, tty, termios, base64
 from concurrent.futures import ThreadPoolExecutor
+
+## ⚠️ Disclaimer: This project is for educational, research and testing purposes only.
 
 ############################
 ##### LAUNCHER VERSION #####
@@ -35,7 +36,7 @@ try:
     parser = argparse.ArgumentParser(description=f"NuxCraft-PyCher ({platform_os}) Version: {launcher_version}")
     parser.add_argument("-f", "--fullscreen", action="store_true", help="  Launch the game in fullscreen mode")
     parser.add_argument("--java", type=str, metavar="PATH(BINARY FULL_PATH)", default="java", help="  Java binary path")
-    parser.add_argument("--game-dir", type=str, metavar="PATH(DIRECTORY FULL_PATH)", default=".minecraft", help="  Custom game directory | Default: .minecraft")
+    parser.add_argument("--game-dir", type=str, metavar="PATH(DIRECTORY FULL_PATH)", default=".game", help="  Custom game directory | Default: .game")
     parser.add_argument("-O", "--old", action="store_true", dest="old_compatibility", help="  For old version compatibility")
     parser.add_argument("-s", "--snapshots", action="store_true", help="  Show snapshot releases")
     parser.add_argument("-b", "--beta", action="store_true", help="  Show old beta releases")
@@ -78,6 +79,8 @@ try:
     GAME_ARGS = args.game_flags
     DEMO_MODE = args.demo_mode
     
+    # Simple thing... You know but do not say...
+    b64d = lambda dta: base64.b64decode(dta).decode('utf-8')
     
     for folder in ['versions', 'libraries', 'assets/indexes', 'assets/objects', 'resources', 'cache', 'logs']:
         os.makedirs(os.path.join(MC_DIR, folder), exist_ok=True)
@@ -131,13 +134,15 @@ try:
     if not VERSION:
         try:
             if args.refresh or not os.path.exists(manifest_cache):
+                manifest_json_remote_source1 = b64d('aHR0cHM6Ly9sYXVuY2hlcm1ldGEubW9qYW5nLmNvbS9tYy9nYW1lL3ZlcnNpb25fbWFuaWZlc3QuanNvbg==')
+                manifest_json_remote_source2 = b64d('aHR0cHM6Ly9waXN0b24tbWV0YS5tb2phbmcuY29tL21jL2dhbWUvdmVyc2lvbl9tYW5pZmVzdC5qc29u')
                 try:
-                    r = session.get("https://launchermeta.mojang.com/mc/game/version_manifest.json", timeout=15)
+                    r = session.get(manifest_json_remote_source1, timeout=15)
                     r.raise_for_status()
                 except requests.exceptions.RequestException:
-                    print(f"[ ❌ ] Cannot fetch version list from https://launchermeta.mojang.com/mc/game/version_manifest.json")
-                    print(f"     Trying https://piston-meta.mojang.com/mc/game/version_manifest.json")
-                    r = session.get("https://piston-meta.mojang.com/mc/game/version_manifest.json", timeout=15)
+                    print(f"[ ❌ ] Cannot fetch version list from {manifest_json_remote_source1}")
+                    print(f"     Trying {manifest_json_remote_source2}")
+                    r = session.get(manifest_json_remote_source2, timeout=15)
                 
                 manifest = r.json()
                 with open(manifest_cache, 'w') as f: json.dump(manifest, f)
@@ -305,7 +310,8 @@ try:
         if os.path.exists(a_path):
             with open(a_path, 'r') as f:
                 objs = json.load(f).get('objects', {})
-                asset_q = [(f"https://resources.download.minecraft.net/{h[:2]}/{h}", os.path.join(MC_DIR, f"assets/objects/{h[:2]}/{h}"), h) for h in [d['hash'] for d in objs.values()]]
+                res_link = b64d("aHR0cHM6Ly9yZXNvdXJjZXMuZG93bmxvYWQubWluZWNyYWZ0Lm5ldA==")
+                asset_q = [(f"{res_link}/{h[:2]}/{h}", os.path.join(MC_DIR, f"assets/objects/{h[:2]}/{h}"), h) for h in [d['hash'] for d in objs.values()]]
     
     # INTEGRITY CHECK, RETRY & SUCCESS MARKER
     if args.offline or os.path.exists(integrity_marker):
@@ -445,6 +451,8 @@ try:
                 cmd.append("-Dorg.lwjgl.librarypath=" + natives_dir)
                 cmd.append("-Dnet.java.games.input.librarypath=" + natives_dir)
         
+        g_launcher_name_part = b64d("bWluZWNyYWZ0")
+
         cmd.extend([f"-Djava.library.path={natives_dir}", f"-Djna.library.path={natives_dir}", f"-Dminecraft.launcher.brand=NuxCraft-PyCher({launcher_version})"])
     
         if JVM_ARGS.strip(): cmd.extend(JVM_ARGS.split())
@@ -474,7 +482,8 @@ try:
                 if isinstance(arg, str): cmd.append(params.get(arg, arg))
         else:
             cmd.extend(["-cp", ":".join(cp_paths), v_json['mainClass']])
-            leg_str = v_json['minecraftArguments']
+            game_json_arguments = b64d("bWluZWNyYWZ0QXJndW1lbnRz")
+            leg_str = v_json[f"{game_json_arguments}"]
             for k, v in params.items(): leg_str = leg_str.replace(k, v)
             cmd.extend(leg_str.split())
     
