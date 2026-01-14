@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 ############################
 ##### LAUNCHER VERSION #####
 ############################
-launcher_version = 0.4
+launcher_version = 0.5
 platform_os = "linux" # If for Linux, then the value should always be "linux" (CASE SENSITIVE).
 ############################
 
@@ -38,8 +38,8 @@ try:
     parser.add_argument("--java", type=str, metavar="PATH(BINARY FULL_PATH)", default="java", help="  Java binary path")
     parser.add_argument("--game-dir", type=str, metavar="PATH(DIRECTORY FULL_PATH)", default=".game", help="  Custom game directory | Default: .game")
     parser.add_argument("-O", "--old", action="store_true", dest="old_compatibility", help="  For old version compatibility")
-    parser.add_argument("-s", "--snapshots", action="store_true", help="  Show snapshot releases")
-    parser.add_argument("-b", "--beta", action="store_true", help="  Show old beta releases")
+    parser.add_argument("-s", "--snapshots", action="store_true", dest="snapshots", help="  Show snapshot releases")
+    parser.add_argument("-b", "--beta", action="store_true", dest="beta", help="  Show old beta releases")
     parser.add_argument("-R", "--refresh", action="store_true", dest="refresh", help="  Fetch version list from internet")
     # parser.add_argument("-r", "--recheck", action="store_true", dest="recheck", help="  Recheck Files") ## Future Plan
     parser.add_argument("-p", "--player", type=str, metavar="NAME", default="player", help="  Set player username | Default: player")
@@ -161,6 +161,7 @@ try:
             with open(last_v_file, 'r') as f: last_saved = f.read().strip()
     
         # Version menu
+        # Interactive Menu setup
         def interactive_select(options, last_saved=""):
     
             def get_linux_key():
@@ -192,12 +193,12 @@ try:
                 try:
                     term_height = os.get_terminal_size().lines
                     # Reserve 6 lines for header/footer
-                    window_size = max(5, term_height - 7) 
+                    window_size = max(5, term_height - 8)
                 except:
                     window_size = 15
     
                 print("\033[H\033[J", end="") # os.system('clear') ## Clear Screen
-                print(f"------ Choose game version ------\n")
+                print(f"\n------ Choose game version ------\n")
                 print(f"Arrows ( ↑ and ↓ ): Navigate | Enter: Select | Q: Print Mode (for fallback)\n")
     
                 # CALCULATE WINDOW SLICE
@@ -510,11 +511,13 @@ try:
           f"        Game Version: {VERSION}\n", 
           f"        Player Name: {USERNAME}\n", 
           f"        Max Allocated RAM: {MEMORY}\n", 
-          f"        Max Thread Count: {MAX_THREAD_COUNT}\n")
+          f"        Max Thread Count: {MAX_THREAD_COUNT}\n"
+          )
     
     if DEMO_MODE: print(f"\n    [ ⚠️ ] WARNING: DEMO MODE enabled...\n", 
                         f"    YES, YOU did it... INTENTIONALLY!!!\n", 
-                        f"    Have a nice 1 Hour 40 Minutes DEMO!!!\n")
+                        f"    Have a nice 1 Hour 40 Minutes DEMO!!!\n"
+                        )
     
     with open(os.path.join(MC_DIR, "logs/latest_launch.log"), "w") as f:
         f.write(f"    (PLATFORM: {platform_os}) COMMAND EXECUTED:\n\n{' '.join(final_cmd)}\n\n")

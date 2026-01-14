@@ -34,6 +34,15 @@ The well-known block game (Java Edition) launcher written in Python for Offline 
           **Note: You can replace `java-latest-openjdk-devel` with `java-latest-openjdk` if you want less tools on Fedora and Fedora based distros.**
 
 
+        - #### If you want custom java version to run old game version:
+          - [Java (Eclipse Adoptium) [Recommended for Linux]](https://adoptium.net/temurin/releases?mode=filter&os=linux&arch=any)
+          - [Microsoft Build of Java (Latest Releases)](https://learn.microsoft.com/java/openjdk/download)
+          - [Microsoft Build of Java (Old Releases)](https://learn.microsoft.com/java/openjdk/older-releases)
+
+
+          #### Note: you can also download the *.zip* file, extract the *.zip* file. And while launching the game, just point the full path of the **java** binary using `--java` flag on the script.
+
+
 
       - ### Instructions for Windows 🪟:
         - ### Download and install Python 3:
@@ -41,8 +50,13 @@ The well-known block game (Java Edition) launcher written in Python for Offline 
           #### **Note: You need to check(turn on) the box/option `☑️ Add Python [Python Version] to PATH` while installing Python**
           #### **Optional: You might also want to install Python for All users by checking `☑️ Install launcher for all users (recommended)`**
         - ### Download and install the correct Java version suitable for the game version you want using these links:
-          - [Microsoft Build of Java (Latest Releases) [Recommended]](https://learn.microsoft.com/java/openjdk/download)
-          - [Microsoft Build of Java (Old Releases) [Recommended]](https://learn.microsoft.com/java/openjdk/older-releases)
+          - [Microsoft Build of Java (Latest Releases) [Recommended for Windows]](https://learn.microsoft.com/java/openjdk/download)
+          - [Microsoft Build of Java (Old Releases) [Recommended for Windows]](https://learn.microsoft.com/java/openjdk/older-releases)
+          - [Java (Eclipse Adoptium)](https://adoptium.net/temurin/releases?mode=filter&os=windows&arch=any)
+
+        
+        #### Note: you can also download the *.zip* file, extract the *.zip* file. And while launching the game, just point the full path of the **java** binary using `--java` flag on the script.
+
         - #### One Extra step needed for Windows:
           - #### Prepeare Windows PowerShell (Optional, but RECOMMENDED)
             - Click `Windows Key` + `R` and paste this line and paste `ENTER`:
