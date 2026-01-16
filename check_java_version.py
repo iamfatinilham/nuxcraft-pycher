@@ -59,8 +59,8 @@ def interactive_select(options):
         if sys.platform == "win32":
             os.system('cls')
 
-        print(f"\n------ Choose game version ------\n")
-        print(f"Arrows ( ↑ and ↓ ): Navigate | Enter: Select | Q: Print Mode (for fallback)\n")
+        print(f"\n\033[1;96m------ Choose Game version to check required Java Version ------\033[0m\n")
+        print(f"\033[1;97mNavigate: \033[1;96mArrows\033[1;97m ( \033[1;96m↑\033[1;97m and \033[1;96m↓\033[1;97m ) | \033[1;97mSelect: \033[1;96mEnter\033[1;97m | \033[1;97mQuit Application: \033[1;96mQ\033[1;97m\n")
 
         start = max(0, min(curr - window_size // 2, total - window_size))
         end = min(start + window_size, total)
@@ -68,8 +68,8 @@ def interactive_select(options):
         for i in range(start, end):
             v = options[i]
             is_selected = (i == curr)
-            sel_prefix = "  \033[1;96m>> " if is_selected else "    "
-            sel_marker = "  [ \033[1;96mX\033[0m ]\033[1;96m" if is_selected else " [   ]" # Future Plan
+            sel_prefix = "  \033[1;96m>> " if is_selected else "     \033[1;97m"
+            sel_marker = "  [ \033[1;96mX\033[0m ]\033[1;96m" if is_selected else "  [   ]\033[1;97m" # Future Plan
             print(f"{sel_prefix}{v['id']}\033[0m (\033[1;93m{v['type']}\033[0m)\033[0m")
 
         print(f"\n  [ \033[1;94m{curr + 1}\033[0m / \033[1;94m{total}\033[0m ] | Page: \033[1;94m{start+1}\033[0m-\033[1;94m{end}\033[0m")

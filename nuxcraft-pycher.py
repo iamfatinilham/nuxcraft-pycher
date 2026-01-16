@@ -106,7 +106,7 @@ try:
                 r.raise_for_status()
                 total = int(r.headers.get('content-length', 0))
                 with open(path, 'wb') as f, tqdm(total=total, unit='B', unit_scale=True, 
-                    unit_divisor=1024, desc=f"[ ☕ ] \033[1;94mSyncing {os.path.basename(path)}\033[0m", disable=silent, bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{rate_fmt}]\033[0m  ") as bar:
+                    unit_divisor=1024, desc=f"  [ ☕ ] \033[1;94mSyncing {os.path.basename(path)}\033[0m", disable=silent, bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt}\033[0m \033[1;97m[{rate_fmt}]\033[0m  ") as bar:
                     for chunk in r.iter_content(chunk_size=1024*1024):
                         if chunk: f.write(chunk); bar.update(len(chunk))
         except Exception as e:
@@ -199,7 +199,7 @@ try:
     
                 print("\033[H\033[J", end="") # os.system('clear') ## Clear Screen
                 print(f"\n\033[1;96m------ Choose Game version ------\033[0m\n")
-                print(f"\033[1;97mNavigate: \033[1;96mArrows\033[1;97m ( \033[1;96m↑\033[1;97m and \033[1;96m↓\033[1;97m ) | \033[1;97mSelect: \033[1;96mEnter\033[1;97m | \033[1;97mPrint Mode (for fallback): \033[1;96mQ\033[1;97m\n")
+                print(f"\033[1;97mNavigate: \033[1;96mArrows\033[1;97m ( \033[1;96m↑\033[1;97m and \033[1;96m↓\033[1;97m ) | \033[1;97mSelect: \033[1;96mEnter\033[1;97m | \033[1;97mUse less\033[0m / \033[1;97mPrint Mode (for fallback): \033[1;96mQ\033[1;97m\n")
     
                 # CALCULATE WINDOW SLICE
                 # Keep the selection 'curr' within the visible window
@@ -212,8 +212,8 @@ try:
                     is_selected = (i == curr)
                     is_last = (v['id'] == last_saved)
     
-                    sel_prefix = "  \033[1;96m>> " if is_selected else "     "
-                    sel_marker = "  [ \033[1;96mX\033[0m ]\033[1;96m" if is_selected else "  [   ]" # Future Plan
+                    sel_prefix = "  \033[1;96m>> " if is_selected else "     \033[1;97m"
+                    sel_marker = "  [ \033[1;96mX\033[0m ]\033[1;96m" if is_selected else "  [   ]\033[1;97m" # Future Plan
     
                     line = f"{sel_prefix}{v['id']}\033[0m (\033[1;93m{v['type']}\033[0m)\033[0m"
                     if is_last:
@@ -249,7 +249,7 @@ try:
                 menu = "\n".join([f"    \033[1;96m{i+1}\033[0m. \033[1;97m{v['id']}\033[0m (\033[1;93m{v['type']}\033[0m) {"\033[1;91m <-- [LAST SELECTED]\033[0m" if v['id'] == last_saved else ''}" for i, v in enumerate(v_pool)])
                 try: subprocess.run(["less", "-XR"], input=menu, text=True, check=True) # Try to run less
                 except: print(menu) # Print Everything Fallback
-                sel = input(f"\nSelect Version [Default: {last_saved}]: ").strip()
+                sel = input(f"\n    \033[1;97mSelect Version\033[0m{f"\033[0m [ Default Selection: \033[1;94m{last_saved}\033[0m ]" if last_saved != '' else ''}:\033[0m ").strip()
                 if not sel and last_saved:
                     VERSION = last_saved
                     V_URL = next(v['url'] for v in v_pool if v['id'] == VERSION)
@@ -327,9 +327,9 @@ try:
             # Run Downloads
             with ThreadPoolExecutor(max_workers=args.threads) as ex:
                 if lib_queue:
-                    list(tqdm(ex.map(lambda x: get(x[0], x[1], x[2], silent=True), lib_queue), total=len(lib_queue), desc="  [ 🔍 ] \033[1;94mDownloading & Verifying Libs\033[0m", bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{rate_fmt}]\033[0m files  "))
+                    list(tqdm(ex.map(lambda x: get(x[0], x[1], x[2], silent=True), lib_queue), total=len(lib_queue), desc="  [ 🔍 ] \033[1;94mDownloading & Verifying Libs\033[0m", bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} \033[0m files  "))
                 if asset_q:
-                    list(tqdm(ex.map(lambda x: get(x[0], x[1], x[2], silent=True), asset_q), total=len(asset_q), desc="  [ 🔍 ] \033[1;94mDownloading & Verifying Assets\033[0m", bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{rate_fmt}]\033[0m items  "))
+                    list(tqdm(ex.map(lambda x: get(x[0], x[1], x[2], silent=True), asset_q), total=len(asset_q), desc="  [ 🔍 ] \033[1;94mDownloading & Verifying Assets\033[0m", bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} \033[0m items  "))
     
             # Final Integrity Check
             missing = []
