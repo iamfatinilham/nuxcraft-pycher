@@ -15,21 +15,21 @@ The well-known block game (Java Edition) launcher written in Python for Offline 
       - ### Instructions for Linux 🐧:
         - #### On `Debian (e.g. Ubuntu)` based distros,
           ```bash
-          sudo apt update && sudo apt install -y less curl python3 python3-pip python3-venv python-is-python3 default-jdk
+          sudo apt update && sudo apt install -y less curl python3 python3-pip python3-venv python-is-python3 libopenal1 libopenal-dev libflite1 flite1-dev default-jdk
           ```
           **Note: You can replace `default-jdk` with `default-jre` if you want less tools on Debian and Debian based distros.**
 
 
         - #### On `Archlinux (e.g. Manjaro)` based distros,
           ```bash
-          sudo pacman -Sy --noconfirm less curl python python-pip jdk-openjdk
+          sudo pacman -Sy --noconfirm less curl python python-pip openal flite jdk-openjdk
           ```
           **Note: You can replace `jdk-openjdk` with `jre-openjdk` if you want less tools on Arch Linux: By the Way and distros based on it.**
 
 
         - #### On `Fedora` based distros,
           ```bash
-          sudo dnf update && sudo dnf install -y less curl python3 python3-pip java-latest-openjdk-devel
+          sudo dnf update && sudo dnf install -y less curl python3 python3-pip openal-soft openal-soft-devel flite flite-devel java-latest-openjdk-devel
           ```
           **Note: You can replace `java-latest-openjdk-devel` with `java-latest-openjdk` if you want less tools on Fedora and Fedora based distros.**
 
@@ -75,7 +75,8 @@ The well-known block game (Java Edition) launcher written in Python for Offline 
 
 
 
-    ### **`Note: Specific game version requires specific Java Version. (Old version of game won't run on newer java version)` You can use `--java` flag to point your script to that Java binary**
+    ### **`Note: Specific game version requires specific Java Version. (Old version of game won't run on newest Java version)` You can use `--java` flag to point your script to that Java binary *(You need to provide the full path of the `java` binary)***
+    ### **Tip: Before downloading the game, you can know the required Java version using the *`check_java_version.py`* script.**
 
     <hr>
 

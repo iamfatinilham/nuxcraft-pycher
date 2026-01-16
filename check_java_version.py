@@ -68,11 +68,11 @@ def interactive_select(options):
         for i in range(start, end):
             v = options[i]
             is_selected = (i == curr)
-            sel_prefix = " >> " if is_selected else "    "
-            sel_marker = " [ X ]" if is_selected else " [   ]" # Future Plan
-            print(f"{sel_prefix}{v['id']} ({v['type']})")
+            sel_prefix = "  \033[1;96m>> " if is_selected else "    "
+            sel_marker = "  [ \033[1;96mX\033[0m ]\033[1;96m" if is_selected else " [   ]" # Future Plan
+            print(f"{sel_prefix}{v['id']}\033[0m (\033[1;93m{v['type']}\033[0m)\033[0m")
 
-        print(f"\n[ {curr + 1} / {total} ] | Page: {start+1}-{end}")
+        print(f"\n  [ \033[1;94m{curr + 1}\033[0m / \033[1;94m{total}\033[0m ] | Page: \033[1;94m{start+1}\033[0m-\033[1;94m{end}\033[0m")
 
         # Input Handling
         if sys.platform == "linux":
@@ -97,7 +97,7 @@ def get_java_major_version(v_json_url, v_id):
         data = response.json()
         return data.get('javaVersion', {}).get('majorVersion', "8")
     except (requests.exceptions.RequestException, Exception):
-        print(f"  [ ❌ ] Cannot fetch required Java version info {v_id}")
+        print(f"  [ ❌ ] \033[1;91mError:\033[0m Cannot fetch required Java version info {v_id}")
         return "\033[1;91mUnknown (Fetch Error)\033[0m"
 
 def main():
@@ -120,7 +120,7 @@ def main():
                 r = session.get(manifest_json_remote_source1, timeout=15)
                 r.raise_for_status()
             except requests.exceptions.RequestException:
-                print(f"  [ ❌ ] Cannot fetch version list from {manifest_json_remote_source1}")
+                print(f"  [ ❌ ] \033[1;91mError:\033[0m Cannot fetch version list from {manifest_json_remote_source1}")
                 print(f"     Trying {manifest_json_remote_source2}")
                 r = session.get(manifest_json_remote_source2, timeout=15)
                 r.raise_for_status()

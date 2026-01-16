@@ -53,7 +53,7 @@ try:
     try:
         from tqdm import tqdm
     except ImportError:
-        print("[ ⚠️️ ] tqdm not found. Installing dependencies...")
+        print("[ ⚠️️ ] \033[1;96mtqdm\033[0m not found. Installing dependencies...")
         subprocess.check_call([sys.executable, "-m", "pip", "install", "tqdm"])
         from tqdm import tqdm
     
@@ -81,11 +81,11 @@ try:
     args = parser.parse_args()
     
     if sys.platform != "win32":
-        print(f"[ ❌ ] Error: This script is designed specifically for {platform_os}.")
+        print(f"[ ❌ ] \033[1;91mError:\033[0m This script is designed specifically for {platform_os}.")
         sys.exit(1)
     
     if args.threads <= 0:
-        print(f"[ ❌ ] Error: Invalid thread count specified: {args.threads}. Must be a positive integer.")
+        print(f"[ ❌ ] \033[1;91mError:\033[0m Invalid thread count specified: {args.threads}. Must be a positive integer.")
         sys.exit(1)
     
     args.threads = min(args.threads, multiprocessing.cpu_count())
@@ -128,14 +128,14 @@ try:
                 r.raise_for_status()
                 total = int(r.headers.get('content-length', 0))
                 with open(path, 'wb') as f, tqdm(total=total, unit='B', unit_scale=True, 
-                    unit_divisor=1024, desc=f"Syncing {os.path.basename(path)}", disable=silent, bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{rate_fmt}]  ") as bar:
+                    unit_divisor=1024, desc=f"[ ☕ ] \033[1;94mSyncing {os.path.basename(path)}\033[0m", disable=silent, bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{rate_fmt}]\033[0m  ") as bar:
                     for chunk in r.iter_content(chunk_size=1024*1024):
                         if chunk: f.write(chunk); bar.update(len(chunk))
         except Exception as e:
-            if not silent: print(f"[ ! ] Error: {e}")
+            if not silent: print(f"[ ! ] \033[1;91mError:\033[0m {e}")
     
     def is_allowed(rules):
-        # Strict Windows filtering for library rules.
+        # Strict Windows filtering for libraries.
         if not rules: return True
         allowed = False
         for r in rules:
@@ -211,11 +211,11 @@ try:
                     window_size = 15
     
                 os.system('cls') ## Clear Screen
-                print(f"\n------ Choose game version ------\n")
-                print(f"Arrows ( ↑ and ↓ ): Navigate | Enter: Select | Q: Print Mode (for fallback)\n")
+                print(f"\n\033[1;96m------ Choose Game version ------\033[0m\n")
+                print(f"\033[1;97mNavigate: \033[1;96mArrows\033[1;97m ( \033[1;96m↑\033[1;97m and \033[1;96m↓\033[1;97m ) | \033[1;97mSelect: \033[1;96mEnter\033[1;97m | \033[1;97mPrint Mode (for fallback): \033[1;96mQ\033[1;97m\n")
     
                 # CALCULATE WINDOW SLICE
-                # This logic keeps the selection 'curr' within the visible window
+                # Keep the selection 'curr' within the visible window
                 start = max(0, min(curr - window_size // 2, total - window_size))
                 end = min(start + window_size, total)
     
@@ -225,17 +225,17 @@ try:
                     is_selected = (i == curr)
                     is_last = (v['id'] == last_saved)
     
-                    sel_prefix = " >> " if is_selected else "    "
-                    sel_marker = " [ X ]" if is_selected else " [   ]" # Future Plan
+                    sel_prefix = "  \033[1;96m>> " if is_selected else "     "
+                    sel_marker = "  [ \033[1;96mX\033[0m ]\033[1;96m" if is_selected else "  [   ]" # Future Plan
     
-                    line = f"{sel_prefix}{v['id']} ({v['type']})"
+                    line = f"{sel_prefix}{v['id']}\033[0m (\033[1;93m{v['type']}\033[0m)\033[0m"
                     if is_last:
-                        line += "  <-- (Last Selected)"
+                        line += "  \033[1;91m<-- (Last Selected)\033[0m"
     
                     # Print the built line
                     print(line)
     
-                print(f"\n[ {curr + 1} / {total} ] | Page: {start+1}-{end}")
+                print(f"\n  [ \033[1;94m{curr + 1}\033[0m / \033[1;94m{total}\033[0m ] | Page: \033[1;94m{start+1}\033[0m-\033[1;94m{end}\033[0m")
     
                 # INPUT HANDLING
                 key = msvcrt.getch()
@@ -257,8 +257,8 @@ try:
             with open(last_v_file, 'w') as f: f.write(VERSION)
         else:
             # FALLBACK to manual input if user quits interactive menu
-            print("\n  ---- Game VERSION LIST ----")
-            menu = "\n".join([f"    {i+1}. {v['id']} ({v['type']}) {' <-- [LAST SELECTED]' if v['id'] == last_saved else ''}" for i, v in enumerate(v_pool)])
+            print("\n\033[1;96m  ---- Game VERSION LIST ----\033[0m")
+            menu = "\n".join([f"    \033[1;96m{i+1}\033[0m. \033[1;97m{v['id']}\033[0m (\033[1;93m{v['type']}\033[0m) {"\033[1;91m <-- [LAST SELECTED]\033[0m" if v['id'] == last_saved else ''}" for i, v in enumerate(v_pool)])
             print(menu) # Print Everything Fallback
             sel = input(f"\nSelect Version [Default: {last_saved}]: ").strip()
             if not sel and last_saved:
@@ -325,20 +325,20 @@ try:
     
     # INTEGRITY CHECK, RETRY & SUCCESS MARKER
     if args.offline or os.path.exists(integrity_marker):
-        print(f"[ ✅ ] Integrity marker found. Skipping verification for {VERSION}.")
+        print(f"[ ✅ ] \033[1;92mIntegrity marker found.\033[0m \033[1;97mSkipping verification for VERSION:\033[0m \033[1;92m{VERSION}\033[0m")
     else:
         max_retries = 7
         success = False
     
         for attempt in range(max_retries):
-            print(f"\n[ {attempt+1} 🎯 ] Download/Verification Attempt: ( {attempt+1} / {max_retries} )")
+            print(f"\n[ \033[1;95m{attempt+1}\033[0m 🎯 ] \033[1;97mDownload/Verification Attempt:\033[0m ( \033[1;95m{attempt+1}\033[0m / \033[1;95m{max_retries}\033[0m )")
     
             # Run Downloads
             with ThreadPoolExecutor(max_workers=args.threads) as ex:
                 if lib_queue:
-                    list(tqdm(ex.map(lambda x: get(x[0], x[1], x[2], silent=True), lib_queue), total=len(lib_queue), desc="[ 🔍 ] Downloading & Verifying Libs", bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} files  "))
+                    list(tqdm(ex.map(lambda x: get(x[0], x[1], x[2], silent=True), lib_queue), total=len(lib_queue), desc="  [ 🔍 ] \033[1;94mDownloading & Verifying Libs\033[0m", bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{rate_fmt}]\033[0m files  "))
                 if asset_q:
-                    list(tqdm(ex.map(lambda x: get(x[0], x[1], x[2], silent=True), asset_q), total=len(asset_q), desc="[ 🔍 ] Downloading & Verifying Assets", bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} items  "))
+                    list(tqdm(ex.map(lambda x: get(x[0], x[1], x[2], silent=True), asset_q), total=len(asset_q), desc="  [ 🔍 ] \033[1;94mDownloading & Verifying Assets\033[0m", bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{rate_fmt}]\033[0m items  "))
     
             # Final Integrity Check
             missing = []
@@ -348,18 +348,18 @@ try:
                 if not os.path.exists(path) or os.path.getsize(path) == 0: missing.append(path)
     
             if not missing:
-                print("[ ✅ ] All files verified successfully.")
+                print("[ ✅ ] \033[1;92mAll files verified successfully.\033[0m")
                 with open(integrity_marker, 'w') as f: f.write("OK")
                 success = True
                 break
             else:
-                print(f"[ ⚠️️ ] Warning: {len(missing)} file/s failed to download or are corrupt:")
+                print(f"[ ⚠️️ ] \033[1;93mWarning:\033[0m {len(missing)} file/s failed to download or are corrupt:")
                 for m in missing[:15]: # Log first 15 missing files to stdout
                     print(f" - {os.path.basename(m)}")
                 if len(missing) > 15: print(f" ... and {len(missing)-15} more.")
     
                 if attempt < max_retries - 1:
-                    print("[ ⚠️️ ] Retrying missing files in 5 seconds...")
+                    print("[ ⚠️️ ] \033[1;93mRetrying missing files in 5 seconds...\033[0m")
                     time.sleep(5)
         
         if args.old_compatibility:
@@ -372,7 +372,7 @@ try:
                     objects = index_data.get('objects', {})
             
                     # tqdm for visual feedback on sound mapping
-                    for name, info in tqdm(objects.items(), desc="[ 🔊 ] Reconstructing Legacy Sounds", bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} items  "):
+                    for name, info in tqdm(objects.items(), desc="[ 🔊 ] \033[1;94mReconstructing Legacy Sounds\033[0m", bar_format="{desc}: \033[1;92m{percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt}\033[0m items  "):
                         h = info['hash']
                         src_file = os.path.join(MC_DIR, f"assets/objects/{h[:2]}/{h}")
                         dst_file = os.path.join(MC_DIR, "resources", name)
@@ -384,13 +384,13 @@ try:
         
         
         if not success:
-            print("\n[ ❌ ] Critical Error: Failed to download required files after multiple attempts.")
-            print(f"[ ❌ ] {len(missing)} files are still missing. Aborting launch.")
+            print("\n[ ❌ ] \033[1;91mCritical Error:\033[0m Failed to download required files after multiple attempts.")
+            print(f"[ ❌ ] {len(missing)} files are still missing. \033[1;91mAborting launch.\033[0m")
             sys.exit(1)
     
     # Extract natives (Windows)
     if not os.listdir(natives_dir):
-        print(f"[ 📂 ] Extracting Natives... ({platform_os})")
+        print(f"[ 📂 ] \033[1;97mExtracting Natives...\033[0m ({platform_os})")
         for np in natives_queue:
             if os.path.exists(np):
                 with zipfile.ZipFile(np, 'r') as z:
@@ -399,10 +399,12 @@ try:
     
     # Exit the program if the user only wanted to download game files.
     if args.game_download_only:
-        print(f"\n[ ✅ ] Game {VERSION} Downloaded Successfully")
-        print(f"\n[ ✅ ] {platform_os} library included...")
-        print(f"\n[ BYE ] Exiting...\n")
+        print(f"\n[ ✅ ] \033[1;92mGame {VERSION} Downloaded Successfully\033[0m")
+        print(f"\n[ ✅ ] \033[1;92m{platform_os} library included...\033[0m")
+        print(f"\n[ 👋 ] \033[1;97mBYE...\033[0m\n")
         sys.exit(0)
+    
+    v_mjvn = max(8, v_json['javaVersion']['majorVersion'])
     
     # THE Local Authentication EXECUTION
     def build_cmd():
@@ -425,12 +427,12 @@ try:
         if has_large_pages_privilege():
             if not args.disable_large_pages:
                 cmd.extend(["-XX:+UseLargePages", "-XX:+AlwaysPreTouch"])
-                print("\n[ ✅ ] Large Pages detected & enabled.")
+                print("\n[ ✅ ] \033[1;92mLarge Pages detected & enabled.\033[0m")
             else:
-                print("\n[ ℹ️ ] Large Pages has been disabled by the user.")
+                print("\n[ ℹ️ ] \033[1;96mLarge Pages\033[1;97m has been disabled by the user.\033[0m")
         else:
-            print("\n[ ℹ️ ] NOTE: Large Pages not available to use or, is disabled (Requires Admin/GPO).\n", 
-                  "      For optimal performance, consider enabling Large Pages on your system (Optional).")
+            print("\n[ ℹ️ ] \033[1;97mNOTE: \033[1;96mLarge Pages\033[1;97m not available to use or, is disabled (\033[1;91mRequires Admin/GPO\033[1;97m).\033[0m\n", 
+                  "      \033[1;97mFor optimal performance, consider enabling \033[1;96mLarge Pages\033[1;97m on your system (\033[1;96mOptional\033[1;97m).\033[0m\n")
     
         # Appending remaining flags
         if not args.old_compatibility: cmd.append("--enable-native-access=ALL-UNNAMED")
@@ -481,20 +483,21 @@ try:
     final_cmd = build_cmd()
     
     print(f"\n[ 👍 ] Finalizing... \n", 
-          f"        Game Version: {VERSION}\n", 
-          f"        Player Name: {USERNAME}\n", 
-          f"        Max Allocated RAM: {MEMORY}\n", 
-          f"        Max Thread Count: {MAX_THREAD_COUNT}\n"
+          f"        🎮 \033[1;97mGame Version:\033[0m \033[1;92m{VERSION}\033[0m\n", 
+          f"        👩 \033[1;97mPlayer Name:\033[0m \033[1;92m{USERNAME}\033[0m\n", 
+          f"        🎚️ \033[1;97mMax Allocated RAM:\033[0m \033[1;92m{MEMORY}\033[0m\n", 
+          f"        📈 \033[1;97mMax Thread Count:\033[0m \033[1;92m{MAX_THREAD_COUNT}\033[0m\n", 
+          f"        ☕ \033[1;97mRequired major Java Version:\033[0m \033[1;92m{v_mjvn}\033[0m\n"
           )
     
-    if DEMO_MODE: print(f"\n    [ ⚠️ ] WARNING: DEMO MODE enabled...\n", 
-                        f"    YES, YOU did it... INTENTIONALLY!!!\n", 
-                        f"    Have a nice 1 Hour 40 Minutes DEMO!!!\n"
+    if DEMO_MODE: print(f"\n    [ ⚠️ ] \033[1;93mWARNING:\033[0m DEMO MODE enabled...\n", 
+                        f"    \033[1;97mYES, YOU did it... INTENTIONALLY!!!\033[0m\n", 
+                        f"    Have a nice \033[1;97m1 Hour 40 Minutes\033[0m DEMO!!!\n"
                         )
     
     with open(os.path.join(MC_DIR, "logs/latest_launch.log"), "w") as f:
         f.write(f"    (PLATFORM: {platform_os}) COMMAND EXECUTED:\n\n{' '.join(final_cmd)}\n\n")
-        f.write("-" * 25 + " GAME OUTPUT START " + "-" * 25 + "\n\n")
+        f.write("#" * 25 + " GAME OUTPUT START " + "#" * 25 + "\n\n")
         f.flush()
     
         # Detach and exit
@@ -506,9 +509,9 @@ try:
             creationflags=0x00000008 | 0x00000200
         ) # DETACHED & LAUNCHED NEW_PROCESS_GROUP
     
-        print("[ ✅ ] Game launch started.")
-        print("[ ⏰ ] Please, be patient...\n")
+        print("[ ✅ ] \033[1;97mGame launch started.\033[0m")
+        print("[ ⏰ ] \033[1;97mPlease, be patient...\033[0m\n")
         sys.exit(0)
 except KeyboardInterrupt:
-    print("\n\n[ 💀 ] Shutdown requested by user. Exiting...\n")
+    print("\n\n[ 💀 ] \033[1;91mShutdown requested by user. BYE...\033[0m\n")
     sys.exit(1)
