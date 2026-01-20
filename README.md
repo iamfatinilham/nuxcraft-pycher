@@ -59,7 +59,7 @@ The well-known block game (Java Edition) launcher written in Python for Offline 
 
         - #### One Extra step needed for Windows:
           - #### Prepeare Windows PowerShell (Optional, but RECOMMENDED)
-            - Click `Windows Key` + `R` and paste this line and paste `ENTER`:
+            - Click `Windows Key` + `R` and paste this line and press `ENTER`:
 
               ```ps1
               powershell -Command "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser -Force"

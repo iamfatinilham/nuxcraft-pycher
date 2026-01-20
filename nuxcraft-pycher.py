@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 ############################
 ##### LAUNCHER VERSION #####
 ############################
-launcher_version = 0.5
+launcher_version = 0.6
 platform_os = "linux" # If for Linux, then the value should always be "linux" (CASE SENSITIVE).
 ############################
 
@@ -33,7 +33,7 @@ try:
     
     default_max_threads = multiprocessing.cpu_count()
     
-    parser = argparse.ArgumentParser(description=f"NuxCraft-PyCher ({platform_os}) Version: {launcher_version}")
+    parser = argparse.ArgumentParser(description=f"  NuxCraft-PyCher ({platform_os}) Version: {launcher_version}")
     parser.add_argument("-f", "--fullscreen", action="store_true", help="  Launch the game in fullscreen mode")
     parser.add_argument("--java", type=str, metavar="PATH(BINARY FULL_PATH)", default="java", help="  Java binary path")
     parser.add_argument("--game-dir", type=str, metavar="PATH(DIRECTORY FULL_PATH)", default=".game", help="  Custom game directory | Default: .game")

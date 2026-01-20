@@ -7,7 +7,7 @@ import argparse, requests, sys, base64, os, json, subprocess
 ############################
 ##### LAUNCHER VERSION #####
 ############################
-launcher_version = 0.5
+launcher_version = 0.6
 ############################
 
 try:
@@ -101,7 +101,7 @@ def get_java_major_version(v_json_url, v_id):
         return "\033[1;91mUnknown (Fetch Error)\033[0m"
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=f"  NuxCraft-PyCher | Check Java Version script. | Version: {launcher_version}")
     parser.add_argument("-R", "--refresh", action="store_true", dest="refresh", help="  Fetch version list from internet")
     parser.add_argument("-s", "--snapshots", action="store_true", help="  Show snapshot releases")
     parser.add_argument("-b", "--beta", action="store_true", help="  Show old beta releases")
