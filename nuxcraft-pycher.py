@@ -8,7 +8,7 @@ from concurrent.futures import ThreadPoolExecutor
 ############################
 ##### LAUNCHER VERSION #####
 ############################
-launcher_version = "0.6.9"
+launcher_version = "0.7"
 ############################
 
 # Force UTF-8 Encoding globally to handle emojis across all OS configurations
@@ -598,11 +598,12 @@ try:
                     cmd.append("-Dorg.lwjgl.librarypath=" + natives_dir)
                     cmd.append("-Dnet.java.games.input.librarypath=" + natives_dir)
         
-        g_launcher_name_part = b64d("bWluZWNyYWZ0")
+        game_launcher_name_part = b64d("bWluZWNyYWZ0")
+
         cmd.extend([
             f"-Djava.library.path={natives_dir}", 
             f"-Djna.library.path={natives_dir}", 
-            f"-D{g_launcher_name_part}.launcher.brand=NuxCraft-PyCher({launcher_version})"
+            f"-D{game_launcher_name_part}.launcher.brand=NuxCraft-PyCher({launcher_version})"
             ])
         
         if JVM_ARGS.strip(): cmd.extend(JVM_ARGS.split())
@@ -692,6 +693,7 @@ try:
         print("[ ✅ ] \033[1;97mGame launch started.\033[0m")
         print("[ ⏰ ] \033[1;97mPlease, be patient...\033[0m\n")
         sys.exit(0)
+
 except KeyboardInterrupt:
     print("\n\n[ 💀 ] \033[1;91mShutdown requested by user. BYE...\033[0m\n")
     sys.exit(1)
