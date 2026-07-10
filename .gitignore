@@ -1,3 +1,6 @@
+.agent*
 .java*
+test*
+.test*
 .game*
 .venv*
