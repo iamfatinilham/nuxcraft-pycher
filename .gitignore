@@ -1,6 +1,16 @@
+# Agent files
 .agent*
+CLAUDE*
+
+# Java files and test files
 .java*
 test*
 .test*
+
+# Test game files
 .game*
 .venv*
+
+# Python cache files
+__pycache__/
+*.pyc
