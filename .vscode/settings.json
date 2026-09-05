@@ -1,3 +1,9 @@
 {
-    "files.eol": "\n"
+    "files.eol": "\n",
+    "python.analysis.languageServerMode": "full",
+    "python.analysis.autoImportCompletions": true,
+    "python.analysis.typeCheckingMode": "standard",
+    "python.analysis.diagnosticSeverityOverrides": {
+        "reportGeneralTypeIssues": "none"
+    }
 }

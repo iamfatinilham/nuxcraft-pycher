@@ -108,6 +108,15 @@ sudo pkg install -y python3 py311-pip curl openal-soft openjdk21
 
 ### You get the idea, install java, python3, python-pip for your distro/OS
 
+> [!NOTE]
+> **Text-To-Speech (TTS) Native Libraries across OSes:**
+> - **Linux:** Uses `libflite.so` (Flite engine), which `nuxcraft-pycher.py` automatically extracts from the bundled library JAR into the native binaries directory.
+> - **Windows:** Uses the built-in Windows SAPI (Speech API) / `FliteWrapper.dll`, which the script automatically extracts as `.dll` files.
+> - **macOS:** Uses the native Cocoa `SpeechSynthesis` framework / `.dylib` libraries, extracted automatically by the launcher script.
+> - **FreeBSD:** Handled via standard OpenAL / system audio bindings.
+> 
+> No manual file placement is required on any operating system; native libraries are managed fully automatically by the script.
+
 **`Note: Specific game version requires specific Java Version. (Old version of game won't run on newest Java version)` You can use `--java` flag to point your script to that Java binary *(You need to provide the full path of the `java` binary)***
 
 
@@ -116,6 +125,10 @@ sudo pkg install -y python3 py311-pip curl openal-soft openjdk21
 ---
 
 ### Step 2: Download the script (Single file only)
+
+> [!NOTE]  
+> The links below download the **stable release** (`main` branch). If you want to test the cutting-edge features and latest bug fixes, replace `main` in the URLs with `refs/heads/development` to download the **development branch** script!
+> Example URL: `https://raw.githubusercontent.com/iamfatinilham/nuxcraft-pycher/refs/heads/development/nuxcraft-pycher.py`
 
 #### On Linux 🐧:
 

@@ -1,16 +1,30 @@
 # Agent files
+AGENTS.md
 .agent*
 CLAUDE*
+GEMINI*
+.puku
+
+# Local-only planning/handoff docs (not version-controlled by design)
+implementation_plan.md
+
+
+# IDE
+!.vscode/
+
 
 # Java files and test files
 .java*
 test*
 .test*
 
+
 # Test game files
 .game*
 .venv*
 
+
 # Python cache files
 __pycache__/
 *.pyc
+
